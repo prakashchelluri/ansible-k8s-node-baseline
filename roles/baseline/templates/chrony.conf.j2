@@ -1,0 +1,13 @@
+{{ ansible_managed | comment }}
+{% for pool in baseline_chrony_pools %}
+pool {{ pool }} iburst
+{% endfor %}
+{% for server in baseline_chrony_servers %}
+server {{ server }} iburst
+{% endfor %}
+
+driftfile {{ baseline_chrony_driftfile }}
+# Step the clock on the first three updates if it is off by more than 1s, then slew only.
+makestep 1.0 3
+rtcsync
+logdir /var/log/chrony

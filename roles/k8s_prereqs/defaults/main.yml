@@ -1,0 +1,17 @@
+---
+# kubelet refuses to start with swap on unless explicitly configured otherwise.
+k8s_prereqs_disable_swap: true
+
+# Loaded now and on every boot via /etc/modules-load.d/k8s.conf.
+k8s_prereqs_kernel_modules:
+  - overlay
+  - br_netfilter
+
+# Written to /etc/sysctl.d/99-kubernetes.conf. Requires br_netfilter to be loaded.
+k8s_prereqs_sysctl:
+  net.bridge.bridge-nf-call-iptables: 1
+  net.bridge.bridge-nf-call-ip6tables: 1
+  net.ipv4.ip_forward: 1
+
+# Added on top of the OS-specific runtime prerequisites in vars/.
+k8s_prereqs_packages_extra: []

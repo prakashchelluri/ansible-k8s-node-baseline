@@ -1,0 +1,13 @@
+---
+- name: Apply the Kubernetes node baseline
+  hosts: k8s_nodes
+  become: true
+  roles:
+    - role: baseline
+      tags: [baseline]
+    - role: k8s_prereqs
+      tags: [k8s_prereqs]
+    - role: node_exporter
+      tags: [node_exporter]
+    - role: hardening_basic
+      tags: [hardening_basic]

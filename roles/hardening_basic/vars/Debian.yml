@@ -1,0 +1,3 @@
+---
+hardening_basic_ssh_service: ssh
+hardening_basic_ssh_package: openssh-server

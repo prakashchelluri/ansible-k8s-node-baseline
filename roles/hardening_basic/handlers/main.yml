@@ -1,0 +1,7 @@
+---
+# try-reload-or-restart is a no-op when the service is inactive, which is the case on
+# Ubuntu 24.04 with socket-activated sshd (each connection reads the config fresh).
+# The systemd module would start the service instead, so systemctl is called directly.
+- name: Reload sshd
+  ansible.builtin.command: systemctl try-reload-or-restart {{ hardening_basic_ssh_service }} # noqa: command-instead-of-module
+  changed_when: true

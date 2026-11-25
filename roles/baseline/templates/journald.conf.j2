@@ -1,0 +1,6 @@
+{{ ansible_managed | comment }}
+[Journal]
+Storage={{ baseline_journald_storage }}
+SystemMaxUse={{ baseline_journald_system_max_use }}
+SystemMaxFileSize={{ baseline_journald_system_max_file_size }}
+MaxRetentionSec={{ baseline_journald_max_retention }}

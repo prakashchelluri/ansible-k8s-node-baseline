@@ -1,0 +1,12 @@
+---
+- name: Restart chrony
+  ansible.builtin.systemd_service:
+    name: "{{ baseline_chrony_service }}"
+    state: restarted
+  # In check mode on a fresh host the package/unit is not really installed yet.
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Restart journald
+  ansible.builtin.systemd_service:
+    name: systemd-journald
+    state: restarted

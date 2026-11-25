@@ -1,0 +1,4 @@
+---
+# This role applies every change immediately (swapoff, modprobe, sysctl reload),
+# so it needs no handlers. The file exists to keep the role layout uniform.
+[]

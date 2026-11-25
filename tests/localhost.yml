@@ -1,0 +1,7 @@
+---
+# Used by CI: converge the GitHub Actions runner itself.
+k8s_nodes:
+  hosts:
+    localhost:
+      ansible_connection: local
+      ansible_python_interpreter: /usr/bin/python3

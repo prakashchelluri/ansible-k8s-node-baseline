@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  role_name: node_exporter
+  author: Satya Prakash Chelluri
+  description: Pinned, checksum-verified Prometheus node_exporter with a hardened systemd unit.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: EL
+      versions: ["8", "9"]
+    - name: Ubuntu
+      versions: [jammy, noble]
+  galaxy_tags: [prometheus, monitoring, exporter]
+dependencies: []

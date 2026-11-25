@@ -1,0 +1,7 @@
+{{ ansible_managed | comment }}
+PermitRootLogin {{ hardening_basic_ssh_permit_root_login }}
+PasswordAuthentication {{ hardening_basic_ssh_password_authentication }}
+KbdInteractiveAuthentication {{ hardening_basic_ssh_kbd_interactive_authentication }}
+PubkeyAuthentication yes
+X11Forwarding {{ hardening_basic_ssh_x11_forwarding }}
+MaxAuthTries {{ hardening_basic_ssh_max_auth_tries }}

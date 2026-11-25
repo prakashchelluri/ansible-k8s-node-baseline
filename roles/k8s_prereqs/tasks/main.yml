@@ -1,0 +1,53 @@
+---
+- name: Check that the OS family is supported
+  ansible.builtin.assert:
+    that: ansible_facts['os_family'] in ['RedHat', 'Debian']
+    fail_msg: "Unsupported OS family {{ ansible_facts['os_family'] }}."
+    quiet: true
+
+- name: Load OS family variables
+  ansible.builtin.include_vars: "{{ ansible_facts['os_family'] }}.yml"
+
+- name: Install container runtime prerequisites
+  ansible.builtin.package:
+    name: "{{ k8s_prereqs_packages + k8s_prereqs_packages_extra }}"
+    state: present
+
+- name: Turn off active swap
+  ansible.builtin.command: swapoff -a
+  changed_when: true
+  when:
+    - k8s_prereqs_disable_swap | bool
+    - ansible_facts['swaptotal_mb'] | int > 0
+
+- name: Comment out swap entries in fstab so swap stays off after reboot
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^([^#\s]\S*\s+\S+\s+swap\s.*)$'
+    replace: '# \1'
+  when: k8s_prereqs_disable_swap | bool
+
+- name: Load kernel modules on boot
+  ansible.builtin.template:
+    src: k8s-modules.conf.j2
+    dest: /etc/modules-load.d/k8s.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Load kernel modules now
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ k8s_prereqs_kernel_modules }}"
+
+- name: Apply Kubernetes networking sysctls
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/99-kubernetes.conf
+    state: present
+    reload: true
+  loop: "{{ k8s_prereqs_sysctl | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"

@@ -1,0 +1,84 @@
+---
+- name: Check that the OS family is supported
+  ansible.builtin.assert:
+    that: ansible_facts['os_family'] in ['RedHat', 'Debian']
+    fail_msg: "Unsupported OS family {{ ansible_facts['os_family'] }}; supported are RedHat (EL 8/9) and Debian (Ubuntu 22.04/24.04)."
+    quiet: true
+
+- name: Load OS family variables
+  ansible.builtin.include_vars: "{{ ansible_facts['os_family'] }}.yml"
+
+- name: Refresh the apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Install baseline packages
+  ansible.builtin.package:
+    name: "{{ baseline_packages + baseline_packages_extra }}"
+    state: present
+
+- name: Configure chrony
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: "{{ baseline_chrony_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart chrony
+
+- name: Enable and start chrony
+  ansible.builtin.systemd_service:
+    name: "{{ baseline_chrony_service }}"
+    enabled: true
+    state: started
+  # In check mode on a fresh host the package/unit is not really installed yet.
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Create the journald drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Limit journald disk usage
+  ansible.builtin.template:
+    src: journald.conf.j2
+    dest: /etc/systemd/journald.conf.d/50-baseline.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart journald
+
+- name: Install logrotate policies
+  ansible.builtin.template:
+    src: logrotate.j2
+    dest: "/etc/logrotate.d/{{ item.name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ baseline_logrotate_configs }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Apply baseline sysctl settings
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/60-baseline.conf
+    state: present
+    reload: true
+  loop: "{{ baseline_sysctl | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: Set process limits
+  ansible.builtin.template:
+    src: limits.conf.j2
+    dest: /etc/security/limits.d/90-baseline.conf
+    owner: root
+    group: root
+    mode: "0644"

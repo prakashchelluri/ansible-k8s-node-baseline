@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  role_name: hardening_basic
+  author: Satya Prakash Chelluri
+  description: Key-only SSH without root login, plus unattended security updates per OS family.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: EL
+      versions: ["8", "9"]
+    - name: Ubuntu
+      versions: [jammy, noble]
+  galaxy_tags: [security, ssh, hardening]
+dependencies: []

@@ -1,0 +1,13 @@
+---
+# Written to /etc/ssh/sshd_config.d/00-hardening.conf. sshd uses the first value it reads,
+# so this file sorts first and overrides cloud-image drop-ins that re-enable passwords.
+hardening_basic_ssh_permit_root_login: "no"
+hardening_basic_ssh_password_authentication: "no"
+hardening_basic_ssh_kbd_interactive_authentication: "no"
+hardening_basic_ssh_x11_forwarding: "no"
+hardening_basic_ssh_max_auth_tries: 4
+
+# Unattended security updates: unattended-upgrades on Ubuntu, dnf-automatic on EL.
+hardening_basic_auto_updates: true
+# EL only: "security" applies security errata only, "default" applies all updates.
+hardening_basic_dnf_upgrade_type: security

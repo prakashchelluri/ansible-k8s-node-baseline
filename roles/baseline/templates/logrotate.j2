@@ -1,0 +1,10 @@
+{{ ansible_managed | comment }}
+{{ item.paths | join(' ') }} {
+    {{ item.frequency | default('daily') }}
+    rotate {{ item.rotate | default(7) }}
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+}

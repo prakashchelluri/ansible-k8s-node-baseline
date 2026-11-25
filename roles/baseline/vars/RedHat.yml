@@ -1,0 +1,4 @@
+---
+baseline_chrony_config_path: /etc/chrony.conf
+baseline_chrony_service: chronyd
+baseline_chrony_driftfile: /var/lib/chrony/drift

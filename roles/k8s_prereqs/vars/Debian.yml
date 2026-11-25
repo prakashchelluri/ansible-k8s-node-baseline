@@ -1,0 +1,7 @@
+---
+# Tools kubeadm/kubelet and container runtimes expect on the host.
+k8s_prereqs_packages:
+  - conntrack
+  - ethtool
+  - iptables
+  - socat

@@ -1,0 +1,72 @@
+---
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install tools
+        run: |
+          pip install -r requirements-dev.txt
+          ansible-galaxy collection install -r collections/requirements.yml -p collections
+
+      - name: yamllint
+        run: yamllint --strict .
+
+      - name: ansible-lint
+        run: ansible-lint
+
+      - name: Syntax check
+        run: ansible-playbook --syntax-check site.yml
+
+  # Converge the runner itself (Ubuntu, real systemd and kernel) twice:
+  # the first run applies everything, the second must change nothing.
+  converge:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install Ansible
+        run: |
+          pip install -r requirements-dev.txt
+          ansible-galaxy collection install -r collections/requirements.yml -p collections
+
+      - name: First run
+        run: ansible-playbook -i tests/localhost.yml site.yml
+
+      - name: Second run must report no changes
+        run: |
+          ansible-playbook -i tests/localhost.yml site.yml | tee second-run.log
+          grep -Eq 'localhost +: ok=[0-9]+ +changed=0 +unreachable=0 +failed=0' second-run.log
+
+      - name: Verify the node
+        run: |
+          set -x
+          curl -sf http://127.0.0.1:9100/metrics -o metrics.txt
+          grep -q '^node_exporter_build_info' metrics.txt
+          systemctl is-active chrony node_exporter
+          test "$(sysctl -n net.ipv4.ip_forward)" = 1
+          test "$(sysctl -n net.bridge.bridge-nf-call-iptables)" = 1
+          test -z "$(swapon --noheadings)"
+          lsmod | grep -q '^br_netfilter'
+          sudo sshd -T > sshd.txt
+          grep -qx 'permitrootlogin no' sshd.txt
+          grep -qx 'passwordauthentication no' sshd.txt

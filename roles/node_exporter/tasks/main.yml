@@ -1,0 +1,90 @@
+---
+- name: Map the CPU architecture to the release name
+  ansible.builtin.set_fact:
+    node_exporter_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_facts['architecture']] | default('unsupported') }}"
+
+- name: Check that a checksum is pinned for this architecture
+  ansible.builtin.assert:
+    that: node_exporter_arch in node_exporter_checksums
+    fail_msg: "No pinned checksum for architecture {{ ansible_facts['architecture'] }}."
+    quiet: true
+
+- name: Set release paths
+  ansible.builtin.set_fact:
+    node_exporter_release: "node_exporter-{{ node_exporter_version }}.linux-{{ node_exporter_arch }}"
+
+- name: Create the node_exporter system group
+  ansible.builtin.group:
+    name: "{{ node_exporter_user }}"
+    system: true
+
+- name: Create the node_exporter system user
+  ansible.builtin.user:
+    name: "{{ node_exporter_user }}"
+    group: "{{ node_exporter_user }}"
+    system: true
+    shell: /usr/sbin/nologin
+    home: /nonexistent
+    create_home: false
+
+- name: Create the install directory
+  ansible.builtin.file:
+    path: "{{ node_exporter_install_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download the release tarball and verify its checksum
+  ansible.builtin.get_url:
+    url: "{{ node_exporter_download_base_url }}/v{{ node_exporter_version }}/{{ node_exporter_release }}.tar.gz"
+    dest: "{{ node_exporter_install_dir }}/{{ node_exporter_release }}.tar.gz"
+    checksum: "sha256:{{ node_exporter_checksums[node_exporter_arch] }}"
+    owner: root
+    group: root
+    mode: "0644"
+  # In check mode on a fresh host the install directory is not really created yet.
+  ignore_errors: "{{ ansible_check_mode }}"
+
+# Skipped in check mode on a fresh host because the tarball has not really been downloaded.
+- name: Unpack the release
+  ansible.builtin.unarchive:
+    src: "{{ node_exporter_install_dir }}/{{ node_exporter_release }}.tar.gz"
+    dest: "{{ node_exporter_install_dir }}"
+    remote_src: true
+    creates: "{{ node_exporter_install_dir }}/{{ node_exporter_release }}/node_exporter"
+  when: not ansible_check_mode
+
+- name: Point the binary path at the pinned release
+  ansible.builtin.file:
+    src: "{{ node_exporter_install_dir }}/{{ node_exporter_release }}/node_exporter"
+    dest: "{{ node_exporter_binary_path }}"
+    state: link
+    force: true
+  notify: Restart node_exporter
+
+- name: Create the textfile collector directory
+  ansible.builtin.file:
+    path: "{{ node_exporter_textfile_dir }}"
+    state: directory
+    owner: root
+    group: "{{ node_exporter_user }}"
+    mode: "0755"
+
+- name: Install the systemd unit
+  ansible.builtin.template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart node_exporter
+
+- name: Enable and start node_exporter
+  ansible.builtin.systemd_service:
+    name: node_exporter
+    enabled: true
+    state: started
+    daemon_reload: true
+  # In check mode on a fresh host the package/unit is not really installed yet.
+  ignore_errors: "{{ ansible_check_mode }}"

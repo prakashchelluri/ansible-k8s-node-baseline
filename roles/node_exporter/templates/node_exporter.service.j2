@@ -1,0 +1,40 @@
+{{ ansible_managed | comment }}
+[Unit]
+Description=Prometheus node_exporter
+Documentation=https://github.com/prometheus/node_exporter
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User={{ node_exporter_user }}
+Group={{ node_exporter_user }}
+ExecStart={{ node_exporter_binary_path }} \
+    --web.listen-address={{ node_exporter_listen_address }} \
+    --collector.textfile.directory={{ node_exporter_textfile_dir }}{% for arg in node_exporter_extra_args %} \
+    {{ arg }}{% endfor %}
+
+Restart=on-failure
+RestartSec=5s
+
+# Hardening: node_exporter only needs to read /proc, /sys and mount metadata.
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+
+[Install]
+WantedBy=multi-user.target

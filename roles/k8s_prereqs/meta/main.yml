@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  role_name: k8s_prereqs
+  author: Satya Prakash Chelluri
+  description: Swap off, overlay/br_netfilter modules, bridge and forwarding sysctls, runtime prerequisites.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: EL
+      versions: ["8", "9"]
+    - name: Ubuntu
+      versions: [jammy, noble]
+  galaxy_tags: [kubernetes, sysctl, swap]
+dependencies: []

@@ -1,0 +1,19 @@
+---
+# Pinned release. When bumping the version, update both checksums from the release's sha256sums.txt:
+# https://github.com/prometheus/node_exporter/releases/download/v<version>/sha256sums.txt
+node_exporter_version: "1.13.1"
+node_exporter_checksums:
+  amd64: "5c00c5234f1ee45900b25539a5a0ab82146a098c15c16a4ec3bc855b597a6477"
+  arm64: "96d82b3b261803f89815b325601cbbc58f49cd8265617bfde1527211934bdd48"
+node_exporter_download_base_url: https://github.com/prometheus/node_exporter/releases/download
+
+node_exporter_user: node-exporter
+node_exporter_install_dir: /opt/node_exporter
+node_exporter_binary_path: /usr/local/bin/node_exporter
+node_exporter_listen_address: "0.0.0.0:9100"
+
+# Drop *.prom files here (e.g. from cron jobs) to expose custom metrics.
+node_exporter_textfile_dir: /var/lib/node_exporter/textfile_collector
+
+# Additional command-line flags, e.g. ["--collector.systemd", "--no-collector.wifi"].
+node_exporter_extra_args: []
